@@ -1,11 +1,22 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'project-summary'
+description: 'GitHub Action that generates a markdown summary file from a GitHub project board'
+author: 'Madhuri Gummalla'
+branding:
+  icon: 'bar-chart-2'  
+  color: 'white'
 inputs:
-  milliseconds: # change this
+  project-url:
+    description: 'The url of the project'
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  configPath:
+    description: 'relative path from the repo root to a JSON file describing the sections of the report'
+    required: true
+  outputPath:
+    description: 'relative path from the repo root to write the report file'
+    required: true
+  token:
+    description: 'Token for accessing the project board and updating the markdown file in the repo. Pass secrets.GITHUB_TOKEN for repo level projects'
+    required: true
 runs:
   using: 'node12'
   main: 'dist/index.js'
