@@ -1,0 +1,38 @@
+{
+  "name": "project-summary",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GitHub Action that generates a markdown summary file from a GitHub project board",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "pack": "ncc build",
+    "test": "jest",
+    "all": "npm run build && npm run pack && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/madhurig/project-summary.git"
+  },
+  "keywords": [
+    "actions",
+    "node"
+  ],
+  "author": "Madhuri Gummalla",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^2.2.0",
+    "@octokit/graphql": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.7.12",
+    "@zeit/ncc": "^0.20.5",
+    "jest": "^24.9.0",
+    "jest-circus": "^24.9.0",
+    "js-yaml": "^3.13.1",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.9.2"
+  }
+}
