@@ -18,19 +18,20 @@ export async function run(inputs: {
     if (projectInfo.projectType == 'repo') {
       console.warn('This action does not support repo level GitHub projects yet.')
     } else {
-      const octokit = new github.GitHub(inputs.token);
+        const octokit = new github.GitHub(inputs.token);
 
-      console.log('Querying for issues ...');
-      const response = await getOpenIssuesInProject(projectInfo, octokit);
-      const issues: IssueInfo[] = await parseResponse(response);
+        console.log('Querying for issues ...');
+        const response = await getOpenIssuesInProject(projectInfo, octokit);
+        console.log('Parsing the issues ...')
+        const issues: IssueInfo[] = await parseResponse(response);
 
-      console.log('Generating the report Markdown ...');
-      const report = generateMarkdownReport(inputs.title, inputs.projectUrl, issues);
+        console.log('Generating the report Markdown ...');
+        const report = generateMarkdownReport(inputs.title, inputs.projectUrl, issues);
 
-      console.log(`Writing the Markdown to ${inputs.outputPath} ...`);
-      fs.writeFileSync(inputs.outputPath, report, 'utf8');
+        console.log(`Writing the Markdown to ${inputs.outputPath} ...`);
+        fs.writeFileSync(inputs.outputPath, report, 'utf8');
 
-      console.log('Done!');
+        console.log('Done!');
     }
 }
 
@@ -61,15 +62,14 @@ function getProjectInfo(projectUrl: string) : ProjectInfo {
 }
 
 function getRepoNWO(issueUrl: string) : string {
-  const splitUrl = issueUrl.split("/");
-  if (splitUrl != null && splitUrl.length == 7) {
-    const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
-    return nwo;
-  } 
-  else {
-    console.log(`Unable to find nwo from ${issueUrl}`);
-    return issueUrl;
+  if (issueUrl != null) {
+    const splitUrl = issueUrl.split("/");
+    if (splitUrl != null && splitUrl.length == 7) {
+      const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
+      return nwo;
+    } 
   }
+  return issueUrl;
 }
 
 async function getOpenIssuesInProject(projectInfo: ProjectInfo, octokit: github.GitHub) {
@@ -140,7 +140,7 @@ async function parseResponse(response: any) : Promise<IssueInfo[]> {
     await response.organization.project.columns.nodes.forEach(function(columnNode: any) {
         columnNode.cards.edges.forEach(function(card: any) {
             // card level
-            if (card.node.content != null && card.node.content.state != 'CLOSED') {
+            if (card.node.content != null && card.node.content.state != 'CLOSED' && card.node.content.title != null) {
 
                 var issue: IssueInfo = {
                     title: card.node.content.title,

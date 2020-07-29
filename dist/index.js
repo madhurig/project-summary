@@ -3599,6 +3599,7 @@ function run(inputs) {
             const octokit = new github.GitHub(inputs.token);
             console.log('Querying for issues ...');
             const response = yield getOpenIssuesInProject(projectInfo, octokit);
+            console.log('Parsing the issues ...');
             const issues = yield parseResponse(response);
             console.log('Generating the report Markdown ...');
             const report = generateMarkdownReport(inputs.title, inputs.projectUrl, issues);
@@ -3634,15 +3635,14 @@ function getProjectInfo(projectUrl) {
     }
 }
 function getRepoNWO(issueUrl) {
-    const splitUrl = issueUrl.split("/");
-    if (splitUrl != null && splitUrl.length == 7) {
-        const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
-        return nwo;
+    if (issueUrl != null) {
+        const splitUrl = issueUrl.split("/");
+        if (splitUrl != null && splitUrl.length == 7) {
+            const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
+            return nwo;
+        }
     }
-    else {
-        console.log(`Unable to find nwo from ${issueUrl}`);
-        return issueUrl;
-    }
+    return issueUrl;
 }
 function getOpenIssuesInProject(projectInfo, octokit) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -3711,7 +3711,7 @@ function parseResponse(response) {
         yield response.organization.project.columns.nodes.forEach(function (columnNode) {
             columnNode.cards.edges.forEach(function (card) {
                 // card level
-                if (card.node.content != null && card.node.content.state != 'CLOSED') {
+                if (card.node.content != null && card.node.content.state != 'CLOSED' && card.node.content.title != null) {
                     var issue = {
                         title: card.node.content.title,
                         url: card.node.content.url,
