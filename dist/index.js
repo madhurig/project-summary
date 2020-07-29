@@ -3633,6 +3633,17 @@ function getProjectInfo(projectUrl) {
             projectNumber: projectNumber };
     }
 }
+function getRepoNWO(issueUrl) {
+    const splitUrl = issueUrl.split("/");
+    if (splitUrl != null && splitUrl.length == 7) {
+        const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
+        return nwo;
+    }
+    else {
+        console.log(`Unable to find nwo from ${issueUrl}`);
+        return issueUrl;
+    }
+}
 function getOpenIssuesInProject(projectInfo, octokit) {
     return __awaiter(this, void 0, void 0, function* () {
         if (projectInfo.projectType == "org") {
@@ -3704,25 +3715,29 @@ function parseResponse(response) {
                     var issue = {
                         title: card.node.content.title,
                         url: card.node.content.url,
-                        repo_nwo: card.node.content.url,
+                        repo_nwo: getRepoNWO(card.node.content.url),
                         state: card.node.content.state,
                         createdAt: card.node.content.createdAt,
                         updatedAt: card.node.content.updatedAt,
                         assignees: [],
                         labels: []
                     };
-                    // check assignees                
-                    card.node.content.assignees.nodes.forEach(function (assigneeNode) {
-                        if (assigneeNode != null) {
-                            issue.assignees.push(assigneeNode.login);
-                        }
-                    });
+                    // check assignees        
+                    if (card.node.content.assignees != null) {
+                        card.node.content.assignees.nodes.forEach(function (assigneeNode) {
+                            if (assigneeNode != null) {
+                                issue.assignees.push(assigneeNode.login);
+                            }
+                        });
+                    }
                     //check labels
-                    card.node.content.labels.nodes.forEach(function (lableNode) {
-                        if (lableNode != null) {
-                            issue.labels.push(lableNode.name);
-                        }
-                    });
+                    if (card.node.content.labels != null) {
+                        card.node.content.labels.nodes.forEach(function (lableNode) {
+                            if (lableNode != null) {
+                                issue.labels.push(lableNode.name);
+                            }
+                        });
+                    }
                     issues.push(issue);
                 }
             });
@@ -9056,15 +9071,18 @@ function* generateSummary(title, url) {
 exports.generateSummary = generateSummary;
 function* generateIssuesSection(title, issues) {
     yield h2(title);
-    yield h2(`Total Issue Count = ${issues.length}\n`);
+    yield `**Total Issues = ${issues.length}**\n`;
+    yield h2(`Issue Details`);
+    yield `<details>\n<summary>📝</summary>\n`;
     yield '| Issue | Assignees | Labels | Last Updated | Repository |';
     yield '|---|---|---|---|---|';
     for (const issue of issues) {
         yield `${link(issue.title, issue.url)} | ${issue.assignees} | ${issue.labels} | ${issue.updatedAt} | ${issue.repo_nwo}`;
     }
+    yield `</details>\n`;
     const owners = sumIssuesForOwners(issues);
-    yield (`\n`);
-    yield h2(`Count by Assignee\n`);
+    yield h2(`Assignees`);
+    yield `<details>\n<summary>👨👩</summary>\n`;
     yield '| Assignee | Count |';
     yield '|---|---|';
     // Sort the table in descending order of issue count
@@ -9072,9 +9090,10 @@ function* generateIssuesSection(title, issues) {
     for (const key of ownersByIssueCount) {
         yield `${key} | ${owners[key]}`;
     }
+    yield `</details>\n`;
     const labels = sumIssuesForLabels(issues);
-    yield (`\n`);
-    yield h2(`Count by Label\n`);
+    yield h2(`Labels`);
+    yield `<details>\n<summary>🏷</summary>\n`;
     yield '| Label | Count |';
     yield '|---|---|';
     // Sort the table in descending order of issue count
@@ -9082,9 +9101,21 @@ function* generateIssuesSection(title, issues) {
     for (const key of labelsByIssueCount) {
         yield `${key} | ${labels[key]}`;
     }
+    yield `</details>\n`;
+    const repos = sumIssuesForRepos(issues);
+    yield h2(`Repositories`);
+    yield `<details>\n<summary>📒</summary>\n`;
+    yield '| Repository | Count |';
+    yield '|---|---|';
+    // Sort the table in descending order of issue count
+    const reposByIssueCount = Object.keys(repos).sort((a, b) => repos[b] - repos[a]);
+    for (const key of reposByIssueCount) {
+        yield `${key} | ${repos[key]}`;
+    }
+    yield `</details>\n`;
 }
 exports.generateIssuesSection = generateIssuesSection;
-/** Get a mapping of owner logins to the number of issues they have in this section. */
+/** Get a mapping of IssueInfo field to the number of issues they have in this section. */
 function sumIssuesForOwners(issues) {
     const result = {};
     for (const issue of issues) {
@@ -9122,6 +9153,17 @@ function sumIssuesForLabels(issues) {
             }
             result[noLabelKey] += 1;
         }
+    }
+    return result;
+}
+function sumIssuesForRepos(issues) {
+    const result = {};
+    for (const issue of issues) {
+        const repo = issue.repo_nwo;
+        if (!result[repo]) {
+            result[repo] = 0;
+        }
+        result[repo] += 1;
     }
     return result;
 }

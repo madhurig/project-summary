@@ -34,7 +34,7 @@ export async function run(inputs: {
     }
 }
 
-function getProjectInfo(projectUrl: String) : ProjectInfo {
+function getProjectInfo(projectUrl: string) : ProjectInfo {
     const splitUrl = projectUrl.split("/");
     const projectNumber = parseInt(splitUrl[6], 10);
     
@@ -58,6 +58,18 @@ function getProjectInfo(projectUrl: String) : ProjectInfo {
         projectOwner: nwo,
         projectNumber: projectNumber};
     }
+}
+
+function getRepoNWO(issueUrl: string) : string {
+  const splitUrl = issueUrl.split("/");
+  if (splitUrl != null && splitUrl.length == 7) {
+    const nwo = `${splitUrl[3]}/${splitUrl[4]}`;
+    return nwo;
+  } 
+  else {
+    console.log(`Unable to find nwo from ${issueUrl}`);
+    return issueUrl;
+  }
 }
 
 async function getOpenIssuesInProject(projectInfo: ProjectInfo, octokit: github.GitHub) {
@@ -133,7 +145,7 @@ async function parseResponse(response: any) : Promise<IssueInfo[]> {
                 var issue: IssueInfo = {
                     title: card.node.content.title,
                     url: card.node.content.url,
-                    repo_nwo: card.node.content.url,
+                    repo_nwo: getRepoNWO(card.node.content.url),
                     state: card.node.content.state,
                     createdAt: card.node.content.createdAt,
                     updatedAt: card.node.content.updatedAt,
@@ -141,19 +153,23 @@ async function parseResponse(response: any) : Promise<IssueInfo[]> {
                     labels: []
                 }
 
-                // check assignees                
-                card.node.content.assignees.nodes.forEach(function(assigneeNode: any) {
-                    if(assigneeNode != null) {
-                        issue.assignees.push(assigneeNode.login);
-                    }
-                })
+                // check assignees        
+                if (card.node.content.assignees != null) {        
+                  card.node.content.assignees.nodes.forEach(function(assigneeNode: any) {
+                      if(assigneeNode != null) {
+                          issue.assignees.push(assigneeNode.login);
+                      }
+                  })
+                }
 
                 //check labels
-                card.node.content.labels.nodes.forEach(function(lableNode: any) {
-                    if (lableNode != null) {
-                        issue.labels.push(lableNode.name);
-                    }
-                })
+                if (card.node.content.labels != null) {
+                  card.node.content.labels.nodes.forEach(function(lableNode: any) {
+                      if (lableNode != null) {
+                          issue.labels.push(lableNode.name);
+                      }
+                  })
+                }
 
                 issues.push(issue);
             }

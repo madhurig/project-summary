@@ -7,16 +7,20 @@ export function* generateSummary(title: string, url: string) {
 
 export function* generateIssuesSection(title: string, issues: IssueInfo[]) {
     yield h2(title);
-    yield h2(`Total Issue Count = ${issues.length}\n`);
+    yield `**Total Issues = ${issues.length}**\n`;
+
+    yield h2(`Issue Details`);
+    yield `<details>\n<summary>📝</summary>\n`;
     yield '| Issue | Assignees | Labels | Last Updated | Repository |';
     yield '|---|---|---|---|---|';
     for (const issue of issues) {
         yield `${link(issue.title, issue.url)} | ${issue.assignees} | ${issue.labels} | ${issue.updatedAt} | ${issue.repo_nwo}`;
     }
+    yield `</details>\n`;
 
     const owners = sumIssuesForOwners(issues);
-    yield(`\n`)
-    yield h2(`Count by Assignee\n`);
+    yield h2(`Assignees`);
+    yield `<details>\n<summary>👨👩</summary>\n`;
     yield '| Assignee | Count |';
     yield '|---|---|';
     // Sort the table in descending order of issue count
@@ -24,10 +28,11 @@ export function* generateIssuesSection(title: string, issues: IssueInfo[]) {
     for (const key of ownersByIssueCount) {
         yield `${key} | ${owners[key]}`;
     }
+    yield `</details>\n`;
 
     const labels = sumIssuesForLabels(issues);
-    yield(`\n`)
-    yield h2(`Count by Label\n`);
+    yield h2(`Labels`);
+    yield `<details>\n<summary>🏷</summary>\n`;
     yield '| Label | Count |';
     yield '|---|---|';
     // Sort the table in descending order of issue count
@@ -35,10 +40,23 @@ export function* generateIssuesSection(title: string, issues: IssueInfo[]) {
     for (const key of labelsByIssueCount) {
         yield `${key} | ${labels[key]}`;
     }
+    yield `</details>\n`;
+
+    const repos = sumIssuesForRepos(issues);
+    yield h2(`Repositories`);
+    yield `<details>\n<summary>📒</summary>\n`;
+    yield '| Repository | Count |';
+    yield '|---|---|';
+    // Sort the table in descending order of issue count
+    const reposByIssueCount = Object.keys(repos).sort((a, b) => repos[b] - repos[a]);
+    for (const key of reposByIssueCount) {
+        yield `${key} | ${repos[key]}`;
+    }
+    yield `</details>\n`;
 
 }
 
-/** Get a mapping of owner logins to the number of issues they have in this section. */
+/** Get a mapping of IssueInfo field to the number of issues they have in this section. */
 function sumIssuesForOwners(issues: IssueInfo[]) {
     const result: { [owner: string]: number } = {};
 
@@ -78,6 +96,20 @@ function sumIssuesForLabels(issues: IssueInfo[]) {
             }
             result[noLabelKey] += 1
         }
+    }
+
+    return result;
+}
+
+function sumIssuesForRepos(issues: IssueInfo[]) {
+    const result: { [repo: string]: number } = {};
+
+    for (const issue of issues) {
+        const repo = issue.repo_nwo;
+        if (!result[repo]) {
+            result[repo] = 0;
+        }
+        result[repo] += 1
     }
 
     return result;
