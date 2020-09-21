@@ -38,7 +38,7 @@ export function* generateIssuesSection(title: string, issues: IssueInfo[]) {
     // Sort the table in descending order of issue count
     const labelsByIssueCount = Object.keys(labels).sort((a, b) => labels[b] - labels[a]);
     for (const key of labelsByIssueCount) {
-        yield `${key} | ${labels[key]}`;
+        yield `${key.replace('>', '&gt;')} | ${labels[key]}`
     }
     yield `</details>\n`;
 
